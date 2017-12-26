@@ -12,7 +12,7 @@ import nltk
 import numpy as np
 from keras.models import load_model
 
-## 探索數據分析(EDA )
+## 探索數據分析(EDA)
 # 計算訓練資料的字句最大字數
 maxlen = 0
 word_freqs = collections.Counter()
@@ -33,10 +33,10 @@ print('nb_words ', len(word_freqs))
 MAX_FEATURES = 2000
 MAX_SENTENCE_LENGTH = 40
 vocab_size = min(MAX_FEATURES, len(word_freqs)) + 2
-word2index = {x[0]: i+2 for i, x in enumerate(word_freqs.most_common(MAX_FEATURES))}
-word2index["PAD"] = 0
-word2index["UNK"] = 1
-index2word = {v:k for k, v in word2index.items()}
+word_index = {x[0]: i+2 for i, x in enumerate(word_freqs.most_common(MAX_FEATURES))}
+word_index["PAD"] = 0
+word_index["UNK"] = 1
+index2word = {v:k for k, v in word_index.items()}
 X = np.empty(num_recs,dtype=list)
 y = np.zeros(num_recs)
 i=0
@@ -47,10 +47,10 @@ with open('./Sentiment1_training.txt','r+', encoding='UTF-8') as f:
         words = nltk.word_tokenize(sentence.lower())
         seqs = []
         for word in words:
-            if word in word2index:
-                seqs.append(word2index[word])
+            if word in word_index:
+                seqs.append(word_index[word])
             else:
-                seqs.append(word2index["UNK"])
+                seqs.append(word_index["UNK"])
         X[i] = seqs
         y[i] = int(label)
         i += 1
@@ -83,7 +83,7 @@ print("\nTest score: %.3f, accuracy: %.3f" % (score, acc))
 print('{}   {}      {}'.format('預測','真實','句子'))
 for i in range(5):
     idx = np.random.randint(len(Xtest))
-    xtest = Xtest[idx].reshape(1,40)
+    xtest = Xtest[idx].reshape(1,MAX_SENTENCE_LENGTH)
     ylabel = ytest[idx]
     ypred = model.predict(xtest)[0][0]
     sent = " ".join([index2word[x] for x in xtest[0] if x != 0])
@@ -92,23 +92,26 @@ for i in range(5):
 # 模型存檔
 model.save('Sentiment1.h5')  # creates a HDF5 file 'model.h5'
     
-##### 自己輸入
-INPUT_SENTENCES = ['I love reading.','You are so boring.']
+##### 自己輸入測試
+INPUT_SENTENCES = ['I love it.','It is so boring.', 'I love it althougn it is so boring.']
 XX = np.empty(len(INPUT_SENTENCES),dtype=list)
+# 轉換文字為數值
 i=0
 for sentence in  INPUT_SENTENCES:
     words = nltk.word_tokenize(sentence.lower())
     seq = []
     for word in words:
-        if word in word2index:
-            seq.append(word2index[word])
+        if word in word_index:
+            seq.append(word_index[word])
         else:
-            seq.append(word2index['UNK'])
+            seq.append(word_index['UNK'])
     XX[i] = seq
     i+=1
 
 XX = sequence.pad_sequences(XX, maxlen=MAX_SENTENCE_LENGTH)
+# 預測，並將結果四捨五入，轉換為 0 或 1
 labels = [int(round(x[0])) for x in model.predict(XX) ]
 label2word = {1:'正面', 0:'負面'}
+# 顯示結果
 for i in range(len(INPUT_SENTENCES)):
     print('{}   {}'.format(label2word[labels[i]], INPUT_SENTENCES[i]))
