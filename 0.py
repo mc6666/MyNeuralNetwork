@@ -48,7 +48,7 @@ print(predictions)
 # 模型結構存檔
 from keras.models import model_from_json
 json_string = model.to_json()
-with open("model.config", "w") as text_file:
+with open("model.config", "w", encoding="utf-8") as text_file:
     text_file.write(json_string)
 
     
